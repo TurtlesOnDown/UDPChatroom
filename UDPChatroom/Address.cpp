@@ -5,14 +5,19 @@ Address::Address() {
   port = 0;
 }
 
-Address::Address(unsigned char a, unsigned char b, unsigned char c, unsigned char d, unsigned int port) {
+Address::Address(unsigned char a, unsigned char b, unsigned char c, unsigned char d, unsigned short prt) {
   address = (a << 24) | (b << 16) | (c << 8) | d;
-  port = port;
+  port = prt;
 }
 
-Address::Address(unsigned int address, unsigned int port) {
+Address::Address(unsigned int address, unsigned short prt) {
   address = address;
-  port = port;
+  port = prt;
+}
+
+void Address::SetAddress(unsigned char a, unsigned char b, unsigned char c, unsigned char d, unsigned short prt) {
+  address = (a << 24) | (b << 16) | (c << 8) | d;
+  port = prt;
 }
 
 unsigned int Address::GetAddress() const {
@@ -37,4 +42,8 @@ unsigned char Address::GetD() const {
 
 unsigned short Address::GetPort() const {
   return port;
+}
+
+bool Address::operator==(const Address &other) const {
+  return address == other.address && port == other.port;
 }

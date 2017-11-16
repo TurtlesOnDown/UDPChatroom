@@ -3,21 +3,31 @@
 #include "Socket.h"
 
 Socket::Socket() {
-#if PLATFORM == PLATFORM_WINDOWS
-    WSADATA WsaData;
-    WSAStartup(MAKEWORD(2, 2), &WsaData) == NO_ERROR;
-#else
-    true;
-#endif
+  Init();
 }
 
 Socket::~Socket() {
+  CleanUp();
+}
+
+void Socket::Init() {
 #if PLATFORM == PLATFORM_WINDOWS
-    WSACleanup();
+  WSADATA WsaData;
+  if (WSAStartup(MAKEWORD(2, 2), &WsaData) != 0) {
+    std::cout << "WSAStartup Failed." << std::endl;
+  }
+#else
 #endif
 }
 
-bool Socket::Open(unsigned short port) {
+void Socket::CleanUp() {
+#if PLATFORM == PLATFORM_WINDOWS
+  WSACleanup();
+#endif
+}
+
+
+bool Socket::Open() {
   handle = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
 
   if (handle <= 0)
@@ -26,31 +36,35 @@ bool Socket::Open(unsigned short port) {
     return false;
   }
 
+  return true;
+}
+
+bool Socket::Bind(unsigned short port) {
   sockaddr_in address;
   address.sin_family = AF_INET;
   address.sin_addr.s_addr = INADDR_ANY;
-  address.sin_port = htons((unsigned short)port);
+  address.sin_port = htons(port);
 
   if (bind(handle, (const sockaddr*)&address, sizeof(sockaddr_in)) < 0) {
     std::cout << "failed to bind socket\n";
     return false;
-  }
+}
 
 #if PLATFORM == PLATFORM_MAC || PLATFORM == PLATFORM_UNIX
 
-    int nonBlocking = 1;
-    if (fcntl(handle, F_SETFL, O_NONBLOCK, nonBlocking) == -1) {
-      printf("failed to set non-blocking\n");
-      return false;
-    }
+  int nonBlocking = 1;
+  if (fcntl(handle, F_SETFL, O_NONBLOCK, nonBlocking) == -1) {
+    printf("failed to set non-blocking\n");
+    return false;
+  }
 
 #elif PLATFORM == PLATFORM_WINDOWS
 
-    DWORD nonBlocking = 1;
-    if (ioctlsocket(handle, FIONBIO, &nonBlocking) != 0) {
-      printf("failed to set non-blocking\n");
-      return false;
-    }
+  DWORD nonBlocking = 1;
+  if (ioctlsocket(handle, FIONBIO, &nonBlocking) != 0) {
+    printf("failed to set non-blocking\n");
+    return false;
+  }
 
 #endif
 
@@ -102,7 +116,7 @@ int Socket::Receive(Address & sender, void * data, int size) {
   int bytes = recvfrom(handle, (char*)data, size, 0, (sockaddr*)&from, &fromLength);
 
   if (bytes <= 0) {
-    std::cout << "failed to recieve packet\n" << WSAGetLastError();
+    //std::cout << "failed to recieve packet: " << WSAGetLastError() << std::endl;
     return 0;
   }
 

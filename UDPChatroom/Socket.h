@@ -14,12 +14,12 @@
 
 #include <winsock2.h>
 
-#elif PLATFORM == PLATFORM_MAC || 
-PLATFORM == PLATFORM_UNIX
+#elif PLATFORM == PLATFORM_MAC || PLATFORM == PLATFORM_UNIX
 
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <fcntl.h>
+#include <unistd.h>
 
 #endif
 
@@ -39,7 +39,13 @@ public:
 
   ~Socket();
 
-  bool Open(unsigned short port);
+  void Init();
+
+  void CleanUp();
+
+  bool Open();
+
+  bool Bind(unsigned short port);
 
   void Close();
 
@@ -53,9 +59,10 @@ public:
     void * data,
     int size);
 
+  
 private:
-
   int handle;
+  
 };
 
 #endif // !SOCKET
